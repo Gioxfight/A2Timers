@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 DAY_MINUTES = 1440
 DEFAULT_SOUND = "builtin:bell"
+REGIONS = ("global", "kr", "tw")  # AION 2 Global, Korea, Taiwan
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
@@ -67,12 +68,27 @@ def _parse_weekdays(rule_id, days) -> tuple[int, ...]:
         raise ValueError(f"{rule_id}: weekdays must use {', '.join(WEEKDAYS)}") from exc
 
 
-def load_rules(path) -> list[Rule]:
+def merge_region(data: dict, region: str) -> dict:
+    """Event definition with the region's overrides applied (Global uses the base fields)."""
+    merged = {key: value for key, value in data.items() if key != "regions"}
+    override = (data.get("regions") or {}).get(region) or {}
+    # An override switches the repeat kind: weekly days and fixed periods are exclusive.
+    if "weekdays" in override:
+        merged.pop("every_minutes", None)
+    if "every_minutes" in override:
+        merged.pop("weekdays", None)
+    merged.update(override)
+    return merged
+
+
+def load_rules(path, region: str = "global") -> list[Rule]:
+    if region not in REGIONS:
+        raise ValueError(f"unknown region {region!r}")
     with open(path, encoding="utf-8") as f:
         raw = json.load(f)
     if not isinstance(raw, list) or not raw:
         raise ValueError("events.json must be a non-empty list")
-    return [parse_rule(item) for item in raw]
+    return [parse_rule(merge_region(item, region)) for item in raw]
 
 
 def _today_anchor(rule: Rule, now: datetime) -> tuple[datetime, datetime]:

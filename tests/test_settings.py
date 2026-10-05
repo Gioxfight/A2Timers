@@ -20,7 +20,7 @@ class SettingsTests(unittest.TestCase):
     def test_missing_file_gives_defaults(self):
         self.assertEqual(settings.load(self.path), {"x": 50, "y": 50, "lead_minutes": 5, "language": "auto",
                                                     "check_updates": True, "scale": 1.0, "opacity": 0.85,
-                                                    "events": {}})
+                                                    "region": "global", "events": {}})
 
     def test_corrupt_file_gives_defaults(self):
         Path(self.path).write_text("{not json", encoding="utf-8")
@@ -28,7 +28,7 @@ class SettingsTests(unittest.TestCase):
 
     def test_round_trip(self):
         data = {"x": 300, "y": 120, "lead_minutes": 10, "language": "en", "check_updates": False,
-                "scale": 1.5, "opacity": 0.6, "events": {"rift": {"show": False, "alert": True, "sound": "builtin:gong"}}}
+                "scale": 1.5, "opacity": 0.6, "region": "kr", "events": {"rift": {"show": False, "alert": True, "sound": "builtin:gong"}}}
         settings.save(self.path, data)
         self.assertEqual(settings.load(self.path), data)
 
@@ -52,10 +52,11 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(settings.clamp_opacity(0.05), 0.2)
 
     def test_invalid_values_are_ignored(self):
-        self.write({"language": "fr", "check_updates": "yes", "x": True,
+        self.write({"language": "fr", "check_updates": "yes", "x": True, "region": "eu",
                     "events": {"rift": {"show": "no", "sound": 5}, "kaira": "bad"}})
         data = settings.load(self.path)
-        self.assertEqual((data["language"], data["check_updates"], data["x"]), ("auto", True, 50))
+        self.assertEqual((data["language"], data["check_updates"], data["x"], data["region"]),
+                         ("auto", True, 50, "global"))
         self.assertEqual(data["events"], {"rift": {}})
 
     def test_legacy_alerts_are_migrated(self):

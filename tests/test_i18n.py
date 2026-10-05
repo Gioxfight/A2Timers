@@ -19,6 +19,14 @@ class I18nTests(unittest.TestCase):
     def test_day_unit(self):
         self.assertEqual((i18n.t("it", "day_unit"), i18n.t("en", "day_unit")), ("g", "d"))
 
+    def test_utc_offset_label(self):
+        from datetime import timedelta
+        cases = {timedelta(hours=2): "UTC+2", timedelta(0): "UTC", timedelta(hours=-3, minutes=-30): "UTC-3:30",
+                 timedelta(hours=5, minutes=30): "UTC+5:30"}
+        for offset, text in cases.items():
+            with self.subTest(text):
+                self.assertEqual(i18n.utc_offset_label(offset), text)
+
     def test_unknown_language_uses_english(self):
         self.assertEqual(i18n.t("fr", "save"), "Save")
 

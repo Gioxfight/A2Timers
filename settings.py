@@ -3,8 +3,9 @@ import json
 import os
 
 DEFAULTS = {"x": 50, "y": 50, "lead_minutes": 5, "language": "auto", "check_updates": True,
-            "scale": 1.0, "opacity": 0.85}
+            "scale": 1.0, "opacity": 0.85, "region": "global"}
 LANGUAGE_CHOICES = ("auto", "it", "en")
+REGION_CHOICES = ("global", "kr", "tw")  # same as schedule.REGIONS
 SCALE_RANGE = (0.6, 2.0)
 OPACITY_RANGE = (0.2, 1.0)
 EVENT_FIELDS = {"show": bool, "alert": bool, "sound": str}
@@ -47,6 +48,8 @@ def load(path) -> dict:
     data["lead_minutes"] = min(60, max(1, data["lead_minutes"]))
     if raw.get("language") in LANGUAGE_CHOICES:
         data["language"] = raw["language"]
+    if raw.get("region") in REGION_CHOICES:
+        data["region"] = raw["region"]
     if isinstance(raw.get("check_updates"), bool):
         data["check_updates"] = raw["check_updates"]
     if _is_number(raw.get("scale")):

@@ -21,13 +21,13 @@ A small always-on-top overlay for **AION 2** with live countdowns for recurring 
 | Daily reset | every day 16:00 |
 | Weekly reset | Wed 16:00 |
 
-Times are shown in your PC's local time zone.
+These are the **Global** server times (EU / NA / SA / Asia). **Korea** and **Taiwan** have their own schedules: pick your region in ⚙. Times are always shown in your PC's local time zone (daylight saving included).
 
 ### Features
 - Transparent overlay, always on top of the game (use **borderless window** mode), drag it anywhere.
 - Resize it with the **◢** corner grip or the *Size* slider (60–200%), and set its *Opacity* (20–100%).
 - Row turns **orange** before an event and **green ("ACTIVE")** while it is running.
-- Settings (⚙): choose which events to **show**, which ones **alert** you, a **sound per event** (built-in, Windows or your own `.wav`), alert lead time, language (English / Italian).
+- Settings (⚙): choose which events to **show**, which ones **alert** you, a **sound per event** (built-in, Windows or your own `.wav`), alert lead time, language (English / Italian), server region (Global / Korea / Taiwan).
 - **Updates itself:** downloads new versions in the background, checks their SHA-256, then one click on *"⬆ ready – click to update"* installs and reopens it.
 - **Safe for your account:** it does not read the game's memory or network traffic — it only does clock math.
 
@@ -47,6 +47,7 @@ If the game changes its schedule, put your own `events.json` in `%APPDATA%\A2Tim
 ```
 - `anchor_utc` + `every_minutes` (must divide 1440) for repeating events, or `weekdays` for weekly ones.
 - `name` can be a string or `{"it": "...", "en": "..."}`.
+- `regions` overrides fields for Korea / Taiwan, e.g. `"regions": {"kr": {"anchor_utc": "13:00"}}`.
 
 ### Build from source
 Requires Python 3.12+ and [Inno Setup 6](https://jrsoftware.org/isinfo.php).
@@ -82,13 +83,13 @@ The second command ([GitHub CLI](https://cli.github.com/)) proves the file was p
 
 Un piccolo overlay sempre in primo piano per **AION 2** con i countdown degli eventi ricorrenti, più un suono e una notifica di Windows qualche minuto prima che inizino.
 
-Eventi: Shugo Festival, Spacetime Rift, Watcher Kaira, Artifact Siege, Siege Bosses, Guardian Lord Nahma, reset giornaliero e settimanale (orari nella tabella sopra, mostrati nel fuso orario del tuo PC).
+Eventi: Shugo Festival, Spacetime Rift, Watcher Kaira, Artifact Siege, Siege Bosses, Guardian Lord Nahma, reset giornaliero e settimanale. Gli orari della tabella sopra sono quelli dei server **Global** (Europa / Nord America / Sud America / Asia); **Korea** e **Taiwan** hanno orari propri: scegli la tua regione in ⚙. Gli orari sono sempre mostrati nel fuso del tuo PC (ora legale compresa).
 
 ### Funzioni
 - Overlay trasparente sopra il gioco (usa la modalità **finestra senza bordi**), trascinabile.
 - Grandezza regolabile con la maniglia **◢** nell'angolo o con il cursore *Grandezza* (60–200%), più il cursore *Opacità* (20–100%).
 - La riga diventa **arancione** prima dell'evento e **verde ("ATTIVO")** mentre è in corso.
-- Impostazioni (⚙): scegli quali eventi **mostrare**, quali **avvisare**, un **suono per ogni evento** (inclusi, di Windows o un tuo `.wav`), i minuti di anticipo e la lingua.
+- Impostazioni (⚙): scegli quali eventi **mostrare**, quali **avvisare**, un **suono per ogni evento** (inclusi, di Windows o un tuo `.wav`), i minuti di anticipo, la lingua e la regione del server (Global / Korea / Taiwan).
 - **Si aggiorna da solo:** scarica le nuove versioni in background, ne verifica lo SHA-256 e con un clic su *"⬆ pronta – clicca per aggiornare"* si installa e si riapre.
 - **Nessun rischio per l'account:** non legge la memoria del gioco né il traffico di rete, fa solo calcoli sull'orologio.
 

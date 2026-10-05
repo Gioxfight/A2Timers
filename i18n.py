@@ -16,6 +16,9 @@ STRINGS = {
         "language": "Lingua:",
         "lang_auto": "Automatica",
         "lead": "Avviso minuti prima:",
+        "region": "Regione:",
+        "local_time": "Ora del PC: {offset}",
+        "dst": "ora legale",
         "size": "Grandezza:",
         "opacity": "Opacità:",
         "col_event": "Evento",
@@ -58,6 +61,9 @@ STRINGS = {
         "language": "Language:",
         "lang_auto": "Automatic",
         "lead": "Alert minutes before:",
+        "region": "Region:",
+        "local_time": "PC time: {offset}",
+        "dst": "daylight saving",
         "size": "Size:",
         "opacity": "Opacity:",
         "col_event": "Event",
@@ -111,6 +117,30 @@ def resolve_language(setting: str, detected: str | None = None) -> str:
     if setting in LANGUAGES:
         return setting
     return detected if detected is not None else detect_language()
+
+
+REGION_LABELS = {"global": "Global (EU / NA / SA / Asia)", "kr": "Korea", "tw": "Taiwan"}
+
+
+def utc_offset_label(offset) -> str:
+    """timedelta -> 'UTC+2', 'UTC-3:30', 'UTC'."""
+    minutes = round(offset.total_seconds() / 60)
+    if minutes == 0:
+        return "UTC"
+    sign = "+" if minutes > 0 else "-"
+    hours, mins = divmod(abs(minutes), 60)
+    return f"UTC{sign}{hours}" + (f":{mins:02d}" if mins else "")
+
+
+def local_time_label(lang: str) -> str:
+    """e.g. 'Ora del PC: UTC+2 · ora legale', from the Windows clock."""
+    import time
+    from datetime import datetime
+    now = datetime.now().astimezone()
+    text = utc_offset_label(now.utcoffset())
+    if time.localtime().tm_isdst > 0:
+        text += f" · {t(lang, 'dst')}"
+    return t(lang, "local_time", offset=text)
 
 
 def rule_name(rule, lang: str) -> str:

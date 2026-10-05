@@ -84,7 +84,8 @@ class Overlay:
 
         header = tk.Frame(self._container, bg=BG)
         header.pack(fill="x", padx=8, pady=(6, 2))
-        tk.Label(header, text="AION 2 Timers", bg=BG, fg=MUTED, font=self.fonts["small"]).pack(side="left")
+        title = "AION 2 Timers" + ("" if self.prefs["region"] == "global" else f" · {self.prefs['region'].upper()}")
+        tk.Label(header, text=title, bg=BG, fg=MUTED, font=self.fonts["small"]).pack(side="left")
         self._button(header, "✕", self.close)
         self._button(header, "⚙", self.open_settings)
         self.update_label = tk.Label(header, text="", bg=BG, fg=GREEN, font=self.fonts["small"], cursor="hand2")
@@ -223,7 +224,14 @@ class Overlay:
         SettingsDialog(self)
 
     def apply_settings(self, values):
+        region_changed = values.get("region", self.prefs["region"]) != self.prefs["region"]
         self.prefs.update(values)
+        if region_changed:
+            try:
+                self.rules = schedule.load_rules(paths.events_path(), self.prefs["region"])
+            except (OSError, ValueError, KeyError, TypeError):
+                pass  # keep the current schedule; the file was valid at startup
+            self.tracker = notifier.AlertTracker()
         self.apply_scale(self.prefs["scale"])
         self.apply_opacity(self.prefs["opacity"])
         self._save_prefs()
@@ -248,8 +256,10 @@ class SettingsDialog:
         frame = ttk.Frame(win, padding=12)
         frame.pack(fill="both")
 
-        top = ttk.Frame(frame)
-        top.grid(row=0, column=0, sticky="w", pady=(0, 10))
+        head = ttk.Frame(frame)
+        head.grid(row=0, column=0, sticky="w", pady=(0, 10))
+        top = ttk.Frame(head)
+        top.pack(anchor="w")
         ttk.Label(top, text=i18n.t(lang, "language")).pack(side="left")
         self.language_ids = list(settings.LANGUAGE_CHOICES)
         language_labels = [i18n.t(lang, "lang_auto")] + [self.LANGUAGE_LABELS[c] for c in self.language_ids[1:]]
@@ -259,6 +269,16 @@ class SettingsDialog:
         ttk.Label(top, text=i18n.t(lang, "lead")).pack(side="left")
         self.lead = tk.IntVar(value=prefs["lead_minutes"])
         ttk.Spinbox(top, from_=1, to=60, textvariable=self.lead, width=4).pack(side="left", padx=(6, 0))
+
+        where = ttk.Frame(head)
+        where.pack(anchor="w", pady=(8, 0))
+        ttk.Label(where, text=i18n.t(lang, "region")).pack(side="left")
+        self.region_ids = list(settings.REGION_CHOICES)
+        self.region = ttk.Combobox(where, values=[i18n.REGION_LABELS[r] for r in self.region_ids],
+                                   state="readonly", width=26)
+        self.region.current(self.region_ids.index(prefs["region"]))
+        self.region.pack(side="left", padx=(6, 12))
+        ttk.Label(where, text=i18n.local_time_label(lang), foreground="#6b7280").pack(side="left")
 
         look = ttk.Frame(frame)
         look.grid(row=1, column=0, sticky="w", pady=(0, 10))
@@ -328,6 +348,7 @@ class SettingsDialog:
             lead = self.overlay.prefs["lead_minutes"]
         values = {
             "language": self.language_ids[self.language.current()],
+            "region": self.region_ids[self.region.current()],
             "lead_minutes": min(60, max(1, lead)),
             "check_updates": self.check_updates.get(),
             "scale": settings.clamp_scale(self.scale.get()),
@@ -419,7 +440,7 @@ def main():
         root.iconbitmap(default=str(icon))
     prefs = settings.load(paths.settings_path())
     try:
-        rules = schedule.load_rules(paths.events_path())
+        rules = schedule.load_rules(paths.events_path(), prefs["region"])
     except (OSError, ValueError, KeyError, TypeError) as exc:
         root.withdraw()
         lang = i18n.resolve_language(prefs["language"])

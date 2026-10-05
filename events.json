@@ -1,10 +1,10 @@
 [
   {"id": "shugo", "name": "Shugo Festival", "icon": "🎉", "anchor_utc": "00:00", "every_minutes": 60, "duration_minutes": 10, "sound": "builtin:harp"},
-  {"id": "rift", "name": "Spacetime Rift", "icon": "🌀", "anchor_utc": "00:00", "every_minutes": 180, "duration_minutes": 10, "sound": "builtin:crystal"},
-  {"id": "kaira", "name": "Watcher Kaira", "icon": "💀", "anchor_utc": "02:00", "every_minutes": 180, "duration_minutes": 0, "sound": "builtin:warhorn"},
-  {"id": "siege", "name": "Artifact Siege", "icon": "🏰", "anchor_utc": "21:00", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30, "sound": "builtin:fanfare"},
-  {"id": "siege_bosses", "name": "Siege Bosses", "icon": "⚔️", "anchor_utc": "21:30", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30, "sound": "builtin:warhorn"},
-  {"id": "nahma", "name": "Guardian Lord Nahma", "icon": "🐉", "anchor_utc": "19:00", "weekdays": ["fri", "sun"], "duration_minutes": 30, "sound": "builtin:temple"},
-  {"id": "reset", "name": {"it": "Reset giornaliero", "en": "Daily reset"}, "icon": "🕕", "anchor_utc": "16:00", "every_minutes": 1440, "duration_minutes": 0, "sound": "builtin:choir"},
-  {"id": "weekly_reset", "name": {"it": "Reset settimanale", "en": "Weekly reset"}, "icon": "📅", "anchor_utc": "16:00", "weekdays": ["wed"], "duration_minutes": 0, "sound": "builtin:choir"}
+  {"id": "rift", "name": "Spacetime Rift", "icon": "🌀", "anchor_utc": "00:00", "every_minutes": 180, "duration_minutes": 10, "sound": "builtin:crystal", "regions": {"kr": {"anchor_utc": "02:00"}}},
+  {"id": "kaira", "name": "Watcher Kaira", "icon": "💀", "anchor_utc": "02:00", "every_minutes": 180, "duration_minutes": 0, "sound": "builtin:warhorn", "regions": {"kr": {"anchor_utc": "16:00", "every_minutes": 240}, "tw": {"anchor_utc": "17:00", "every_minutes": 240}}},
+  {"id": "siege", "name": "Artifact Siege", "icon": "🏰", "anchor_utc": "21:00", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30, "sound": "builtin:fanfare", "regions": {"kr": {"anchor_utc": "12:20", "weekdays": ["wed", "sat"]}, "tw": {"anchor_utc": "13:20", "weekdays": ["wed", "sat"]}}},
+  {"id": "siege_bosses", "name": "Siege Bosses", "icon": "⚔️", "anchor_utc": "21:30", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30, "sound": "builtin:warhorn", "regions": {"kr": {"anchor_utc": "12:45", "weekdays": ["wed", "sat"]}, "tw": {"anchor_utc": "13:45", "weekdays": ["wed", "sat"]}}},
+  {"id": "nahma", "name": "Guardian Lord Nahma", "icon": "🐉", "anchor_utc": "19:00", "weekdays": ["fri", "sun"], "duration_minutes": 30, "sound": "builtin:temple", "regions": {"kr": {"anchor_utc": "13:00"}, "tw": {"anchor_utc": "14:00"}}},
+  {"id": "reset", "name": {"it": "Reset giornaliero", "en": "Daily reset"}, "icon": "🕕", "anchor_utc": "16:00", "every_minutes": 1440, "duration_minutes": 0, "sound": "builtin:choir", "regions": {"kr": {"anchor_utc": "20:00"}, "tw": {"anchor_utc": "21:00"}}},
+  {"id": "weekly_reset", "name": {"it": "Reset settimanale", "en": "Weekly reset"}, "icon": "📅", "anchor_utc": "16:00", "weekdays": ["wed"], "duration_minutes": 0, "sound": "builtin:choir", "regions": {"kr": {"anchor_utc": "20:00", "weekdays": ["tue"]}, "tw": {"anchor_utc": "21:00", "weekdays": ["tue"]}}}
 ]
