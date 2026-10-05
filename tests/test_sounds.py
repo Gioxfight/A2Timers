@@ -47,7 +47,8 @@ class ResolveTests(unittest.TestCase):
 
     def test_catalog(self):
         catalog = sounds.catalog()
-        self.assertEqual(catalog[0], "builtin:bell")
+        self.assertEqual(catalog[0], "builtin:harp")
+        self.assertIn("builtin:bell", catalog)
         self.assertIn("system:SystemNotification", catalog)
         self.assertEqual(catalog[-1], "none")
 

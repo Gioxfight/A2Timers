@@ -1,7 +1,8 @@
 """Alert sound catalog, id resolution and playback (WAV only, via winsound)."""
 from pathlib import Path
 
-BUILTIN = ("bell", "gong", "double", "horn")
+# Fantasy set first, then the simple originals.
+BUILTIN = ("harp", "crystal", "choir", "temple", "warhorn", "fanfare", "bell", "gong", "double", "horn")
 SYSTEM = ("SystemNotification", "SystemAsterisk", "SystemExclamation", "SystemHand")
 FALLBACK = ("alias", "SystemNotification")
 
