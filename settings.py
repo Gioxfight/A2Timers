@@ -1,12 +1,24 @@
-"""Load and save user preferences (window position, alert lead time, per-event alerts)."""
+"""Load and save user preferences (window, language, updates, per-event show/alert/sound)."""
 import json
 import os
 
-DEFAULTS = {"x": 50, "y": 50, "lead_minutes": 5}
+DEFAULTS = {"x": 50, "y": 50, "lead_minutes": 5, "language": "auto", "check_updates": True}
+LANGUAGE_CHOICES = ("auto", "it", "en")
+EVENT_FIELDS = {"show": bool, "alert": bool, "sound": str}
 
 
-def load(path: str) -> dict:
-    data = {**DEFAULTS, "alerts": {}}
+def _is_int(value) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _clean_event(raw) -> dict | None:
+    if not isinstance(raw, dict):
+        return None
+    return {key: raw[key] for key, kind in EVENT_FIELDS.items() if isinstance(raw.get(key), kind)}
+
+
+def load(path) -> dict:
+    data = {**DEFAULTS, "events": {}}
     try:
         with open(path, encoding="utf-8") as f:
             raw = json.load(f)
@@ -14,21 +26,32 @@ def load(path: str) -> dict:
         return data
     if not isinstance(raw, dict):
         return data
-    for key in DEFAULTS:
-        if isinstance(raw.get(key), int) and not isinstance(raw[key], bool):
+    for key in ("x", "y", "lead_minutes"):
+        if _is_int(raw.get(key)):
             data[key] = raw[key]
-    if isinstance(raw.get("alerts"), dict):
-        data["alerts"] = {str(k): bool(v) for k, v in raw["alerts"].items()}
     data["lead_minutes"] = min(60, max(1, data["lead_minutes"]))
+    if raw.get("language") in LANGUAGE_CHOICES:
+        data["language"] = raw["language"]
+    if isinstance(raw.get("check_updates"), bool):
+        data["check_updates"] = raw["check_updates"]
+    if isinstance(raw.get("events"), dict):
+        for rule_id, event in raw["events"].items():
+            cleaned = _clean_event(event)
+            if cleaned is not None:
+                data["events"][str(rule_id)] = cleaned
+    if isinstance(raw.get("alerts"), dict):  # v1 format: {"rule_id": bool}
+        for rule_id, enabled in raw["alerts"].items():
+            data["events"].setdefault(str(rule_id), {}).setdefault("alert", bool(enabled))
     return data
 
 
-def save(path: str, data: dict):
-    tmp = path + ".tmp"
+def save(path, data: dict):
+    tmp = f"{path}.tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     os.replace(tmp, path)
 
 
-def alert_enabled(data: dict, rule_id: str) -> bool:
-    return data.get("alerts", {}).get(rule_id, True)
+def event_pref(data: dict, rule_id: str, default_sound: str) -> dict:
+    """Effective show/alert/sound for one event."""
+    return {"show": True, "alert": True, "sound": default_sound, **data.get("events", {}).get(rule_id, {})}

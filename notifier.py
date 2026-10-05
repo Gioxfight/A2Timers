@@ -1,17 +1,20 @@
-"""Alert de-duplication (pure) plus Windows sound and toast output."""
+"""Alert de-duplication (pure) plus Windows toast output."""
 import os
 import subprocess
+import sys
 from datetime import datetime
 from xml.sax.saxutils import escape
 
-# AppUserModelID of Windows PowerShell: lets an unregistered script show toasts.
+# The installer's Start-menu shortcut registers APP_ID, so toasts show "A2Timers".
+# Running from source has no shortcut: borrow Windows PowerShell's registered id.
+APP_ID = "A2Timers.Overlay"
 POWERSHELL_APP_ID = r"{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe"
 TOAST_SCRIPT = (
     "$null = [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime];"
     "$null = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime];"
     "$xml = New-Object Windows.Data.Xml.Dom.XmlDocument;"
     "$xml.LoadXml($env:A2T_TOAST_XML);"
-    "[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('" + POWERSHELL_APP_ID + "')"
+    "[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($env:A2T_APP_ID)"
     ".Show([Windows.UI.Notifications.ToastNotification]::new($xml))"
 )
 
@@ -32,24 +35,25 @@ class AlertTracker:
         return False
 
 
-def beep():
+def set_process_app_id():
     try:
-        import winsound
-        winsound.PlaySound("SystemNotification", winsound.SND_ALIAS | winsound.SND_ASYNC)
-    except (ImportError, RuntimeError):
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+    except (ImportError, AttributeError, OSError):
         pass
 
 
 def toast(title: str, message: str):
-    # Silent toast: the sound comes from beep(), which still plays when Windows
-    # suppresses notifications during full-screen games.
+    # Silent toast: the alert sound is played separately, so it is still heard when
+    # Windows suppresses notifications during full-screen games.
     xml = ("<toast><visual><binding template='ToastGeneric'>"
            f"<text>{escape(title)}</text><text>{escape(message)}</text>"
            "</binding></visual><audio silent='true'/></toast>")
     try:
         subprocess.Popen(
             ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", TOAST_SCRIPT],
-            env=dict(os.environ, A2T_TOAST_XML=xml),
+            env=dict(os.environ, A2T_TOAST_XML=xml,
+                     A2T_APP_ID=APP_ID if getattr(sys, "frozen", False) else POWERSHELL_APP_ID),
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             creationflags=subprocess.CREATE_NO_WINDOW,
         )

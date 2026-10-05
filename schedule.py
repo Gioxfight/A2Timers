@@ -5,18 +5,20 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 DAY_MINUTES = 1440
+DEFAULT_SOUND = "builtin:bell"
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 
 
 @dataclass(frozen=True)
 class Rule:
     id: str
-    name: str
+    names: dict  # language code -> display name
     icon: str
     anchor_minutes: int
     every_minutes: int
     duration_minutes: int
     weekdays: tuple[int, ...] | None = None  # Monday=0; None means every day
+    sound: str = DEFAULT_SOUND
 
 
 @dataclass(frozen=True)
@@ -43,9 +45,17 @@ def parse_rule(data: dict) -> Rule:
         raise ValueError(f"{rule_id}: weekdays requires every_minutes = 1440")
     if not 0 <= duration < every:
         raise ValueError(f"{rule_id}: duration_minutes must be in [0, every_minutes)")
-    return Rule(id=str(data["id"]), name=str(data["name"]), icon=str(data.get("icon", "")),
+    return Rule(id=str(data["id"]), names=_parse_names(rule_id, data.get("name")), icon=str(data.get("icon", "")),
                 anchor_minutes=hours * 60 + minutes, every_minutes=every, duration_minutes=duration,
-                weekdays=weekdays)
+                weekdays=weekdays, sound=str(data.get("sound", DEFAULT_SOUND)))
+
+
+def _parse_names(rule_id, name) -> dict:
+    if isinstance(name, str) and name:
+        return {"en": name}
+    if isinstance(name, dict) and name and all(isinstance(v, str) and v for v in name.values()):
+        return {str(k): v for k, v in name.items()}
+    raise ValueError(f"{rule_id}: name must be a string or {{\"it\": ..., \"en\": ...}}")
 
 
 def _parse_weekdays(rule_id, days) -> tuple[int, ...]:

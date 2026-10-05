@@ -1,10 +1,10 @@
 [
-  {"id": "shugo", "name": "Shugo Festival", "icon": "🎉", "anchor_utc": "00:00", "every_minutes": 60, "duration_minutes": 10},
-  {"id": "rift", "name": "Spacetime Rift", "icon": "🌀", "anchor_utc": "00:00", "every_minutes": 180, "duration_minutes": 10},
-  {"id": "kaira", "name": "Watcher Kaira", "icon": "💀", "anchor_utc": "02:00", "every_minutes": 180, "duration_minutes": 0},
-  {"id": "siege", "name": "Artifact Siege", "icon": "🏰", "anchor_utc": "21:00", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30},
-  {"id": "siege_bosses", "name": "Siege Bosses", "icon": "⚔️", "anchor_utc": "21:30", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30},
-  {"id": "nahma", "name": "Guardian Lord Nahma", "icon": "🐉", "anchor_utc": "19:00", "weekdays": ["fri", "sun"], "duration_minutes": 30},
-  {"id": "reset", "name": "Reset giornaliero", "icon": "🕕", "anchor_utc": "16:00", "every_minutes": 1440, "duration_minutes": 0},
-  {"id": "weekly_reset", "name": "Reset settimanale", "icon": "📅", "anchor_utc": "16:00", "weekdays": ["wed"], "duration_minutes": 0}
+  {"id": "shugo", "name": "Shugo Festival", "icon": "🎉", "anchor_utc": "00:00", "every_minutes": 60, "duration_minutes": 10, "sound": "builtin:bell"},
+  {"id": "rift", "name": "Spacetime Rift", "icon": "🌀", "anchor_utc": "00:00", "every_minutes": 180, "duration_minutes": 10, "sound": "builtin:gong"},
+  {"id": "kaira", "name": "Watcher Kaira", "icon": "💀", "anchor_utc": "02:00", "every_minutes": 180, "duration_minutes": 0, "sound": "builtin:horn"},
+  {"id": "siege", "name": "Artifact Siege", "icon": "🏰", "anchor_utc": "21:00", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30, "sound": "builtin:horn"},
+  {"id": "siege_bosses", "name": "Siege Bosses", "icon": "⚔️", "anchor_utc": "21:30", "weekdays": ["mon", "thu", "sat"], "duration_minutes": 30, "sound": "builtin:gong"},
+  {"id": "nahma", "name": "Guardian Lord Nahma", "icon": "🐉", "anchor_utc": "19:00", "weekdays": ["fri", "sun"], "duration_minutes": 30, "sound": "builtin:gong"},
+  {"id": "reset", "name": {"it": "Reset giornaliero", "en": "Daily reset"}, "icon": "🕕", "anchor_utc": "16:00", "every_minutes": 1440, "duration_minutes": 0, "sound": "builtin:double"},
+  {"id": "weekly_reset", "name": {"it": "Reset settimanale", "en": "Weekly reset"}, "icon": "📅", "anchor_utc": "16:00", "weekdays": ["wed"], "duration_minutes": 0, "sound": "builtin:double"}
 ]

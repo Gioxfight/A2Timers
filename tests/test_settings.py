@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,28 +14,46 @@ class SettingsTests(unittest.TestCase):
     def tearDown(self):
         self.dir.cleanup()
 
+    def write(self, raw):
+        Path(self.path).write_text(json.dumps(raw), encoding="utf-8")
+
     def test_missing_file_gives_defaults(self):
-        self.assertEqual(settings.load(self.path), {"x": 50, "y": 50, "lead_minutes": 5, "alerts": {}})
+        self.assertEqual(settings.load(self.path), {"x": 50, "y": 50, "lead_minutes": 5, "language": "auto",
+                                                    "check_updates": True, "events": {}})
 
     def test_corrupt_file_gives_defaults(self):
         Path(self.path).write_text("{not json", encoding="utf-8")
         self.assertEqual(settings.load(self.path)["lead_minutes"], 5)
 
     def test_round_trip(self):
-        data = {"x": 300, "y": 120, "lead_minutes": 10, "alerts": {"rift": False}}
+        data = {"x": 300, "y": 120, "lead_minutes": 10, "language": "en", "check_updates": False,
+                "events": {"rift": {"show": False, "alert": True, "sound": "builtin:gong"}}}
         settings.save(self.path, data)
         self.assertEqual(settings.load(self.path), data)
 
     def test_lead_is_clamped(self):
         for raw, expected in ((0, 1), (999, 60)):
             with self.subTest(raw):
-                settings.save(self.path, {"lead_minutes": raw})
+                self.write({"lead_minutes": raw})
                 self.assertEqual(settings.load(self.path)["lead_minutes"], expected)
 
-    def test_alert_enabled_defaults_to_true(self):
-        data = {"alerts": {"rift": False}}
-        self.assertTrue(settings.alert_enabled(data, "shugo"))
-        self.assertFalse(settings.alert_enabled(data, "rift"))
+    def test_invalid_values_are_ignored(self):
+        self.write({"language": "fr", "check_updates": "yes", "x": True,
+                    "events": {"rift": {"show": "no", "sound": 5}, "kaira": "bad"}})
+        data = settings.load(self.path)
+        self.assertEqual((data["language"], data["check_updates"], data["x"]), ("auto", True, 50))
+        self.assertEqual(data["events"], {"rift": {}})
+
+    def test_legacy_alerts_are_migrated(self):
+        self.write({"alerts": {"rift": False}, "events": {"kaira": {"alert": True}}})
+        self.assertEqual(settings.load(self.path)["events"], {"rift": {"alert": False}, "kaira": {"alert": True}})
+
+    def test_event_pref_defaults(self):
+        data = {"events": {"rift": {"show": False}}}
+        self.assertEqual(settings.event_pref(data, "rift", "builtin:gong"),
+                         {"show": False, "alert": True, "sound": "builtin:gong"})
+        self.assertEqual(settings.event_pref(data, "kaira", "builtin:horn"),
+                         {"show": True, "alert": True, "sound": "builtin:horn"})
 
 
 if __name__ == "__main__":
