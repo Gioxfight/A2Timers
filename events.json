@@ -1,0 +1,6 @@
+[
+  {"id": "shugo", "name": "Shugo Festival", "icon": "🎉", "anchor_utc": "00:00", "every_minutes": 60, "duration_minutes": 10},
+  {"id": "rift", "name": "Spacetime Rift", "icon": "🌀", "anchor_utc": "00:00", "every_minutes": 180, "duration_minutes": 10},
+  {"id": "kaira", "name": "Watcher Kaira", "icon": "💀", "anchor_utc": "02:00", "every_minutes": 180, "duration_minutes": 0},
+  {"id": "reset", "name": "Reset giornaliero", "icon": "🕕", "anchor_utc": "16:00", "every_minutes": 1440, "duration_minutes": 0}
+]
