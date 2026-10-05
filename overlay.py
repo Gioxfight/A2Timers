@@ -2,6 +2,7 @@
 import math
 import threading
 import tkinter as tk
+import tkinter.font as tkfont
 import webbrowser
 from datetime import datetime, timezone
 from tkinter import filedialog, messagebox, ttk
@@ -20,8 +21,13 @@ FG = "#d8dce6"
 MUTED = "#7a8194"
 GREEN = "#4ade80"
 ORANGE = "#fb923c"
-FONT = ("Segoe UI", 10)
-MONO = ("Consolas", 11, "bold")
+# Base fonts at 100% size; the overlay scales them with prefs["scale"].
+FONT_SPECS = {
+    "name": ("Segoe UI", 10, "normal"),
+    "time": ("Consolas", 11, "bold"),
+    "small": ("Segoe UI", 8, "normal"),
+    "symbol": ("Segoe UI Symbol", 10, "normal"),
+}
 TOPMOST_EVERY_TICKS = 5
 MUTEX_NAME = "A2Timers.Overlay.Mutex"  # also used by the installer's AppMutex
 ERROR_ALREADY_EXISTS = 183
@@ -44,8 +50,12 @@ class Overlay:
         root.title("A2Timers")
         root.overrideredirect(True)
         root.attributes("-topmost", True)
-        root.attributes("-alpha", 0.85)
         root.configure(bg=BG)
+        self.fonts = {key: tkfont.Font(root, family=family, size=size, weight=weight)
+                      for key, (family, size, weight) in FONT_SPECS.items()}
+        self._grip_start = None
+        self.apply_scale(prefs["scale"])
+        self.apply_opacity(prefs["opacity"])
         self._place_window()
         self.build()
 
@@ -72,25 +82,52 @@ class Overlay:
 
         header = tk.Frame(self._container, bg=BG)
         header.pack(fill="x", padx=8, pady=(6, 2))
-        tk.Label(header, text="AION 2 Timers", bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack(side="left")
+        tk.Label(header, text="AION 2 Timers", bg=BG, fg=MUTED, font=self.fonts["small"]).pack(side="left")
         self._button(header, "✕", self.close)
         self._button(header, "⚙", self.open_settings)
-        self.update_label = tk.Label(header, text="", bg=BG, fg=GREEN, font=("Segoe UI", 8), cursor="hand2")
+        self.update_label = tk.Label(header, text="", bg=BG, fg=GREEN, font=self.fonts["small"], cursor="hand2")
         self._update_shown = False
 
         body = tk.Frame(self._container, bg=BG)
-        body.pack(fill="both", padx=8, pady=(0, 8))
+        body.pack(fill="both", padx=8)
         self.time_labels = {}
         visible = [rule for rule in self.rules if self.pref(rule)["show"]]
         for row, rule in enumerate(visible):
-            tk.Label(body, text=f"{rule.icon} {i18n.rule_name(rule, self.lang)}", bg=BG, fg=FG, font=FONT,
-                     anchor="w").grid(row=row, column=0, sticky="w", padx=(0, 16))
-            label = tk.Label(body, text="--:--", bg=BG, fg=FG, font=MONO, anchor="e", width=14)
+            tk.Label(body, text=f"{rule.icon} {i18n.rule_name(rule, self.lang)}", bg=BG, fg=FG,
+                     font=self.fonts["name"], anchor="w").grid(row=row, column=0, sticky="w", padx=(0, 16))
+            label = tk.Label(body, text="--:--", bg=BG, fg=FG, font=self.fonts["time"], anchor="e", width=14)
             label.grid(row=row, column=1, sticky="e")
             self.time_labels[rule.id] = label
 
+        footer = tk.Frame(self._container, bg=BG)
+        footer.pack(fill="x", padx=(8, 2), pady=(0, 2))
+        grip = tk.Label(footer, text="◢", bg=BG, fg=MUTED, font=self.fonts["small"], cursor="size_nw_se")
+        grip.pack(side="right")
+        # "break" keeps grip drags from also moving the window.
+        grip.bind("<ButtonPress-1>", lambda e: (self._grip_press(e), "break")[1])
+        grip.bind("<B1-Motion>", lambda e: (self._grip_drag(e), "break")[1])
+        grip.bind("<ButtonRelease-1>", lambda _e: (self._save_prefs(), "break")[1])
+
+    def apply_scale(self, scale):
+        self.prefs["scale"] = settings.clamp_scale(scale)
+        for key, (_family, size, _weight) in FONT_SPECS.items():
+            self.fonts[key].configure(size=max(6, round(size * self.prefs["scale"])))
+
+    def apply_opacity(self, opacity):
+        self.prefs["opacity"] = settings.clamp_opacity(opacity)
+        self.root.attributes("-alpha", self.prefs["opacity"])
+
+    def _grip_press(self, event):
+        self._grip_start = (event.x_root, self.root.winfo_width(), self.prefs["scale"])
+
+    def _grip_drag(self, event):
+        x0, width, scale = self._grip_start
+        new_scale = settings.clamp_scale(scale * max(1, width + event.x_root - x0) / width)
+        if new_scale != self.prefs["scale"]:
+            self.apply_scale(new_scale)
+
     def _button(self, parent, text, command):
-        button = tk.Label(parent, text=text, bg=BG, fg=MUTED, font=("Segoe UI Symbol", 10), cursor="hand2")
+        button = tk.Label(parent, text=text, bg=BG, fg=MUTED, font=self.fonts["symbol"], cursor="hand2")
         button.pack(side="right", padx=(6, 0))
         # Returning "break" keeps the click from also starting a window drag.
         button.bind("<Button-1>", lambda _e: (command(), "break")[1])
@@ -164,6 +201,8 @@ class Overlay:
 
     def apply_settings(self, values):
         self.prefs.update(values)
+        self.apply_scale(self.prefs["scale"])
+        self.apply_opacity(self.prefs["opacity"])
         self._save_prefs()
         self.build()
 
@@ -198,8 +237,16 @@ class SettingsDialog:
         self.lead = tk.IntVar(value=prefs["lead_minutes"])
         ttk.Spinbox(top, from_=1, to=60, textvariable=self.lead, width=4).pack(side="left", padx=(6, 0))
 
+        look = ttk.Frame(frame)
+        look.grid(row=1, column=0, sticky="w", pady=(0, 10))
+        self.original_look = (prefs["scale"], prefs["opacity"])
+        self.scale = self._slider(look, 0, i18n.t(lang, "size"), settings.SCALE_RANGE, prefs["scale"],
+                                  overlay.apply_scale)
+        self.opacity = self._slider(look, 1, i18n.t(lang, "opacity"), settings.OPACITY_RANGE, prefs["opacity"],
+                                    overlay.apply_opacity)
+
         table = ttk.Frame(frame)
-        table.grid(row=1, column=0, sticky="w")
+        table.grid(row=2, column=0, sticky="w")
         for col, key in enumerate(("col_event", "col_show", "col_alert", "col_sound")):
             ttk.Label(table, text=i18n.t(lang, key), font=("Segoe UI Semibold", 9)).grid(
                 row=0, column=col, sticky="w", padx=(0, 12), pady=(0, 4))
@@ -217,13 +264,36 @@ class SettingsDialog:
 
         self.check_updates = tk.BooleanVar(value=prefs["check_updates"])
         ttk.Checkbutton(frame, text=i18n.t(lang, "check_updates"), variable=self.check_updates).grid(
-            row=2, column=0, sticky="w", pady=(10, 0))
+            row=3, column=0, sticky="w", pady=(10, 0))
 
         buttons = ttk.Frame(frame)
-        buttons.grid(row=3, column=0, sticky="ew", pady=(12, 0))
+        buttons.grid(row=4, column=0, sticky="ew", pady=(12, 0))
         ttk.Button(buttons, text=i18n.t(lang, "test_alert"), command=self.test_notification).pack(side="left")
         ttk.Button(buttons, text=i18n.t(lang, "save"), command=self.save).pack(side="right")
-        ttk.Button(buttons, text=i18n.t(lang, "cancel"), command=win.destroy).pack(side="right", padx=(0, 6))
+        ttk.Button(buttons, text=i18n.t(lang, "cancel"), command=self.cancel).pack(side="right", padx=(0, 6))
+        win.protocol("WM_DELETE_WINDOW", self.cancel)
+
+    @staticmethod
+    def _slider(parent, row, text, bounds, value, on_change):
+        """Percent slider that previews live on the overlay."""
+        var = tk.DoubleVar(value=value)
+        percent = ttk.Label(parent, width=5)
+
+        def changed(_value=None):
+            percent.configure(text=f"{round(var.get() * 100)}%")
+            on_change(var.get())
+
+        ttk.Label(parent, text=text).grid(row=row, column=0, sticky="w", padx=(0, 8))
+        ttk.Scale(parent, from_=bounds[0], to=bounds[1], variable=var, length=220, command=changed).grid(
+            row=row, column=1, sticky="w")
+        percent.grid(row=row, column=2, sticky="w", padx=(8, 0))
+        changed()
+        return var
+
+    def cancel(self):
+        self.overlay.apply_scale(self.original_look[0])
+        self.overlay.apply_opacity(self.original_look[1])
+        self.win.destroy()
 
     def test_notification(self):
         notifier.toast("A2Timers", i18n.t(self.lang, "test_toast_body"))
@@ -237,6 +307,8 @@ class SettingsDialog:
             "language": self.language_ids[self.language.current()],
             "lead_minutes": min(60, max(1, lead)),
             "check_updates": self.check_updates.get(),
+            "scale": settings.clamp_scale(self.scale.get()),
+            "opacity": settings.clamp_opacity(self.opacity.get()),
             "events": {rule_id: {"show": show.get(), "alert": alert.get(), "sound": sound.value}
                        for rule_id, (show, alert, sound) in self.rows.items()},
         }

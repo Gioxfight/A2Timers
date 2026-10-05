@@ -25,6 +25,7 @@ Times are shown in your PC's local time zone.
 
 ### Features
 - Transparent overlay, always on top of the game (use **borderless window** mode), drag it anywhere.
+- Resize it with the **◢** corner grip or the *Size* slider (60–200%), and set its *Opacity* (20–100%).
 - Row turns **orange** before an event and **green ("ACTIVE")** while it is running.
 - Settings (⚙): choose which events to **show**, which ones **alert** you, a **sound per event** (built-in, Windows or your own `.wav`), alert lead time, language (English / Italian).
 - Tells you when a new version is available.
@@ -70,6 +71,7 @@ Eventi: Shugo Festival, Spacetime Rift, Watcher Kaira, Artifact Siege, Siege Bos
 
 ### Funzioni
 - Overlay trasparente sopra il gioco (usa la modalità **finestra senza bordi**), trascinabile.
+- Grandezza regolabile con la maniglia **◢** nell'angolo o con il cursore *Grandezza* (60–200%), più il cursore *Opacità* (20–100%).
 - La riga diventa **arancione** prima dell'evento e **verde ("ATTIVO")** mentre è in corso.
 - Impostazioni (⚙): scegli quali eventi **mostrare**, quali **avvisare**, un **suono per ogni evento** (inclusi, di Windows o un tuo `.wav`), i minuti di anticipo e la lingua.
 - Ti avvisa quando esce una nuova versione.

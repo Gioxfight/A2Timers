@@ -19,7 +19,8 @@ class SettingsTests(unittest.TestCase):
 
     def test_missing_file_gives_defaults(self):
         self.assertEqual(settings.load(self.path), {"x": 50, "y": 50, "lead_minutes": 5, "language": "auto",
-                                                    "check_updates": True, "events": {}})
+                                                    "check_updates": True, "scale": 1.0, "opacity": 0.85,
+                                                    "events": {}})
 
     def test_corrupt_file_gives_defaults(self):
         Path(self.path).write_text("{not json", encoding="utf-8")
@@ -27,7 +28,7 @@ class SettingsTests(unittest.TestCase):
 
     def test_round_trip(self):
         data = {"x": 300, "y": 120, "lead_minutes": 10, "language": "en", "check_updates": False,
-                "events": {"rift": {"show": False, "alert": True, "sound": "builtin:gong"}}}
+                "scale": 1.5, "opacity": 0.6, "events": {"rift": {"show": False, "alert": True, "sound": "builtin:gong"}}}
         settings.save(self.path, data)
         self.assertEqual(settings.load(self.path), data)
 
@@ -36,6 +37,19 @@ class SettingsTests(unittest.TestCase):
             with self.subTest(raw):
                 self.write({"lead_minutes": raw})
                 self.assertEqual(settings.load(self.path)["lead_minutes"], expected)
+
+    def test_scale_and_opacity_are_clamped(self):
+        for raw, expected in (({"scale": 0.1, "opacity": 0.0}, (0.6, 0.2)),
+                              ({"scale": 9, "opacity": 3}, (2.0, 1.0)),
+                              ({"scale": "big", "opacity": True}, (1.0, 0.85))):
+            with self.subTest(raw):
+                self.write(raw)
+                data = settings.load(self.path)
+                self.assertEqual((data["scale"], data["opacity"]), expected)
+
+    def test_clamp_helpers(self):
+        self.assertEqual(settings.clamp_scale(1.234), 1.23)
+        self.assertEqual(settings.clamp_opacity(0.05), 0.2)
 
     def test_invalid_values_are_ignored(self):
         self.write({"language": "fr", "check_updates": "yes", "x": True,

@@ -2,13 +2,28 @@
 import json
 import os
 
-DEFAULTS = {"x": 50, "y": 50, "lead_minutes": 5, "language": "auto", "check_updates": True}
+DEFAULTS = {"x": 50, "y": 50, "lead_minutes": 5, "language": "auto", "check_updates": True,
+            "scale": 1.0, "opacity": 0.85}
 LANGUAGE_CHOICES = ("auto", "it", "en")
+SCALE_RANGE = (0.6, 2.0)
+OPACITY_RANGE = (0.2, 1.0)
 EVENT_FIELDS = {"show": bool, "alert": bool, "sound": str}
 
 
 def _is_int(value) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_number(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def clamp_scale(value: float) -> float:
+    return round(min(SCALE_RANGE[1], max(SCALE_RANGE[0], value)), 2)
+
+
+def clamp_opacity(value: float) -> float:
+    return round(min(OPACITY_RANGE[1], max(OPACITY_RANGE[0], value)), 2)
 
 
 def _clean_event(raw) -> dict | None:
@@ -34,6 +49,10 @@ def load(path) -> dict:
         data["language"] = raw["language"]
     if isinstance(raw.get("check_updates"), bool):
         data["check_updates"] = raw["check_updates"]
+    if _is_number(raw.get("scale")):
+        data["scale"] = clamp_scale(raw["scale"])
+    if _is_number(raw.get("opacity")):
+        data["opacity"] = clamp_opacity(raw["opacity"])
     if isinstance(raw.get("events"), dict):
         for rule_id, event in raw["events"].items():
             cleaned = _clean_event(event)
