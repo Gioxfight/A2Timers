@@ -71,6 +71,12 @@ def save(path, data: dict):
     os.replace(tmp, path)
 
 
+def event_overrides(chosen: dict, default_sound: str) -> dict:
+    """Only the fields that differ from the defaults, so future default changes still apply."""
+    defaults = {"show": True, "alert": True, "sound": default_sound}
+    return {key: value for key, value in chosen.items() if defaults.get(key) != value}
+
+
 def event_pref(data: dict, rule_id: str, default_sound: str) -> dict:
     """Effective show/alert/sound for one event."""
     return {"show": True, "alert": True, "sound": default_sound, **data.get("events", {}).get(rule_id, {})}

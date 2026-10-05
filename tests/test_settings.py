@@ -62,6 +62,12 @@ class SettingsTests(unittest.TestCase):
         self.write({"alerts": {"rift": False}, "events": {"kaira": {"alert": True}}})
         self.assertEqual(settings.load(self.path)["events"], {"rift": {"alert": False}, "kaira": {"alert": True}})
 
+    def test_event_overrides_keep_only_changes(self):
+        self.assertEqual(settings.event_overrides({"show": True, "alert": True, "sound": "builtin:harp"},
+                                                  "builtin:harp"), {})
+        self.assertEqual(settings.event_overrides({"show": False, "alert": True, "sound": "builtin:gong"},
+                                                  "builtin:harp"), {"show": False, "sound": "builtin:gong"})
+
     def test_event_pref_defaults(self):
         data = {"events": {"rift": {"show": False}}}
         self.assertEqual(settings.event_pref(data, "rift", "builtin:gong"),

@@ -309,9 +309,12 @@ class SettingsDialog:
             "check_updates": self.check_updates.get(),
             "scale": settings.clamp_scale(self.scale.get()),
             "opacity": settings.clamp_opacity(self.opacity.get()),
-            "events": {rule_id: {"show": show.get(), "alert": alert.get(), "sound": sound.value}
-                       for rule_id, (show, alert, sound) in self.rows.items()},
+            "events": {},
         }
+        for rule in self.overlay.rules:
+            show, alert, sound = self.rows[rule.id]
+            chosen = {"show": show.get(), "alert": alert.get(), "sound": sound.value}
+            values["events"][rule.id] = settings.event_overrides(chosen, rule.sound)
         self.win.destroy()
         self.overlay.apply_settings(values)
 
