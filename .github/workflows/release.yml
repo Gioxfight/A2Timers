@@ -5,7 +5,9 @@ on:
     tags: ["v*"]
 
 permissions:
-  contents: write
+  contents: write      # create the release
+  id-token: write      # sign the build provenance attestation
+  attestations: write  # store the attestation
 
 jobs:
   build:
@@ -32,7 +34,28 @@ jobs:
         shell: pwsh
         run: ./build.ps1
 
+      - name: Checksum and release notes
+        shell: pwsh
+        run: |
+          $exe = Get-Item dist/A2Timers-Setup-*.exe
+          $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($exe.Name)" | Out-File dist/SHA256SUMS.txt -Encoding ascii
+          (Get-Content .github/release-notes.md -Raw) `
+            -replace '\{\{FILE\}\}', $exe.Name `
+            -replace '\{\{HASH\}\}', $hash `
+            -replace '\{\{TAG\}\}', '${{ github.ref_name }}' `
+            -replace '\{\{SHA\}\}', '${{ github.sha }}' |
+            Out-File dist/release-notes.md -Encoding utf8
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/A2Timers-Setup-*.exe
+
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/A2Timers-Setup-*.exe
+          files: |
+            dist/A2Timers-Setup-*.exe
+            dist/SHA256SUMS.txt
+          body_path: dist/release-notes.md
           generate_release_notes: true

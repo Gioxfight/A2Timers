@@ -1,3 +1,3 @@
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 # "owner/repo" on GitHub; empty disables the update check.
 GITHUB_REPO = "Gioxfight/A2Timers"

@@ -1,6 +1,6 @@
 # A2Timers — AION 2 event timers overlay
 
-[🇬🇧 English](#english) · [🇮🇹 Italiano](#italiano)
+[🇬🇧 English](#english) · [🇮🇹 Italiano](#italiano) · [🔒 Is it safe? / È sicuro?](#is-it-safe)
 
 ![Overlay](assets/screenshot-overlay.png)
 
@@ -58,8 +58,23 @@ python A2Timers.pyw                          # run from source
 ```
 Releases are built automatically by GitHub Actions when a `vX.Y.Z` tag is pushed (the tag must match `version.py`).
 
-### Privacy
-The only network request is the optional update check to `api.github.com` at startup (can be turned off in settings).
+### Is it safe?
+| | |
+|---|---|
+| **Game** | Never reads the game's memory, files or network traffic, and never sends input to it. It cannot get your account flagged: it only does clock math. |
+| **Network** | One request at startup to `api.github.com` to check for a new version (turn it off in ⚙). Nothing else, no telemetry. |
+| **Permissions** | Installs per user, **no administrator rights**. Writes only to its install folder and `%APPDATA%\A2Timers`. |
+| **Source** | 100% open source (MIT): every line is in this repository. |
+| **Build** | Every installer is built by **GitHub Actions** from the tagged source code — not on a private PC — and published with its **SHA-256** and a signed **build provenance attestation**. |
+
+**Verify your download** (instructions also in every [release](../../releases/latest)):
+```powershell
+Get-FileHash .\A2Timers-Setup-x.y.z.exe          # must match the SHA-256 in the release notes
+gh attestation verify .\A2Timers-Setup-x.y.z.exe --repo Gioxfight/A2Timers
+```
+The second command ([GitHub CLI](https://cli.github.com/)) proves the file was produced by this repository's release workflow from a specific commit.
+
+**Why does Windows warn me?** SmartScreen shows *"Windows protected your PC"* for any installer that is not code-signed with a paid certificate and has few downloads yet — it is not a virus detection. Click **More info → Run anyway**.
 
 ---
 
@@ -83,6 +98,24 @@ Eventi: Shugo Festival, Spacetime Rift, Watcher Kaira, Artifact Siege, Siege Bos
 3. Non servono permessi di amministratore. Opzionali: icona sul desktop, avvio con Windows.
 
 Si disinstalla da *Impostazioni → App*. Le impostazioni restano in `%APPDATA%\A2Timers`.
+
+### È sicuro?
+| | |
+|---|---|
+| **Gioco** | Non legge mai memoria, file o traffico di rete del gioco e non gli invia comandi. Non può farti segnalare l'account: fa solo calcoli sull'orologio. |
+| **Rete** | Una sola richiesta all'avvio verso `api.github.com` per controllare se c'è una nuova versione (disattivabile in ⚙). Nient'altro, nessuna telemetria. |
+| **Permessi** | Si installa per utente, **senza permessi di amministratore**. Scrive solo nella sua cartella e in `%APPDATA%\A2Timers`. |
+| **Codice** | 100% open source (MIT): ogni riga è in questo repository. |
+| **Build** | Ogni installer è costruito da **GitHub Actions** a partire dal codice pubblicato — non su un PC privato — e pubblicato con il suo **SHA-256** e un'**attestazione di provenienza** firmata. |
+
+**Verifica il file scaricato** (istruzioni anche in ogni [release](../../releases/latest)):
+```powershell
+Get-FileHash .\A2Timers-Setup-x.y.z.exe          # deve coincidere con lo SHA-256 della release
+gh attestation verify .\A2Timers-Setup-x.y.z.exe --repo Gioxfight/A2Timers
+```
+Il secondo comando ([GitHub CLI](https://cli.github.com/)) dimostra che il file è stato prodotto dal workflow di questo repository a partire da un commit preciso.
+
+**Perché Windows mi avvisa?** SmartScreen mostra *"Windows ha protetto il PC"* per qualsiasi installer non firmato con un certificato a pagamento e con ancora pochi download: non è un rilevamento di virus. Clicca **Ulteriori informazioni → Esegui comunque**.
 
 ### Orari personalizzati
 Se il gioco cambia gli orari, metti un tuo `events.json` in `%APPDATA%\A2Timers\` (copia [quello predefinito](events.json) e modificalo). Formato come nell'esempio sopra.
