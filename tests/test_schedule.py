@@ -17,6 +17,11 @@ def rule(anchor="00:00", every=60, duration=0):
                                 "every_minutes": every, "duration_minutes": duration})
 
 
+def weekly(anchor, weekdays, duration=0):
+    return schedule.parse_rule({"id": "w", "name": "W", "anchor_utc": anchor,
+                                "weekdays": weekdays, "duration_minutes": duration})
+
+
 class ParseRuleTests(unittest.TestCase):
     def test_valid_rule(self):
         r = rule("02:30", 180, 10)
@@ -34,6 +39,20 @@ class ParseRuleTests(unittest.TestCase):
     def test_rejects_duration_not_shorter_than_period(self):
         with self.assertRaises(ValueError):
             rule(every=60, duration=60)
+
+    def test_weekly_rule(self):
+        r = weekly("21:00", ["mon", "thu", "sat"], 30)
+        self.assertEqual((r.weekdays, r.every_minutes, r.duration_minutes), ((0, 3, 5), 1440, 30))
+
+    def test_rejects_bad_weekday(self):
+        for days in (["xyz"], [], "mon"):
+            with self.subTest(days), self.assertRaises(ValueError):
+                weekly("21:00", days)
+
+    def test_rejects_weekdays_with_sub_daily_period(self):
+        with self.assertRaises(ValueError):
+            schedule.parse_rule({"id": "w", "name": "W", "anchor_utc": "21:00",
+                                 "weekdays": ["mon"], "every_minutes": 60})
 
 
 class QuestlogFixtureTests(unittest.TestCase):
@@ -62,6 +81,25 @@ class QuestlogFixtureTests(unittest.TestCase):
 
     def test_kaira_spawns_match_questlog(self):
         self.assertEqual(self.upcoming_hours("kaira", 3), [13, 16, 19])
+
+    def upcoming_local(self, rule_id, count):
+        starts, t = [], self.now
+        for _ in range(count):
+            t = schedule.next_start(self.rules[rule_id], t)
+            local = t.astimezone(CEST)
+            starts.append((local.month, local.day, local.hour, local.minute))
+        return starts
+
+    def test_weekly_events_match_questlog(self):
+        expected = {
+            "siege": [(10, 5, 23, 0), (10, 8, 23, 0), (10, 10, 23, 0)],
+            "siege_bosses": [(10, 5, 23, 30), (10, 8, 23, 30), (10, 10, 23, 30)],
+            "nahma": [(10, 9, 21, 0), (10, 11, 21, 0), (10, 16, 21, 0)],
+            "weekly_reset": [(10, 7, 18, 0), (10, 14, 18, 0)],
+        }
+        for rule_id, starts in expected.items():
+            with self.subTest(rule_id):
+                self.assertEqual(self.upcoming_local(rule_id, len(starts)), starts)
 
 
 class StateTests(unittest.TestCase):
@@ -97,6 +135,22 @@ class StateTests(unittest.TestCase):
         self.assertEqual(schedule.state(r, datetime(2026, 10, 5, 12, 10, tzinfo=CEST), 5),
                          schedule.state(r, utc(2026, 10, 5, 10, 10), 5))
 
+    def test_weekly_active_window(self):
+        siege = weekly("21:00", ["mon", "thu", "sat"], 30)
+        st = schedule.state(siege, utc(2026, 10, 5, 21, 10), 5)  # Monday
+        self.assertEqual((st.kind, st.seconds, st.next_start), ("active", 1200, utc(2026, 10, 8, 21, 0)))
+
+    def test_weekly_skips_non_matching_days(self):
+        nahma = weekly("19:00", ["fri", "sun"], 30)
+        # Sunday before the spawn: the last occurrence was Friday.
+        self.assertEqual(schedule.current_start(nahma, utc(2026, 10, 11, 18, 0)), utc(2026, 10, 9, 19, 0))
+        st = schedule.state(nahma, utc(2026, 10, 11, 18, 0), 5)
+        self.assertEqual((st.kind, st.seconds, st.next_start), ("idle", 3600, utc(2026, 10, 11, 19, 0)))
+
+    def test_weekly_single_day(self):
+        weekly_reset = weekly("16:00", ["wed"])
+        self.assertEqual(schedule.next_start(weekly_reset, utc(2026, 10, 7, 16, 0)), utc(2026, 10, 14, 16, 0))
+
     def test_reset_stays_at_16_utc_across_dst_change(self):
         reset = rule("16:00", 1440)
         self.assertEqual(schedule.next_start(reset, utc(2026, 10, 24, 12)), utc(2026, 10, 24, 16))
@@ -105,7 +159,8 @@ class StateTests(unittest.TestCase):
 
 class FormatTests(unittest.TestCase):
     def test_format_seconds(self):
-        cases = {0: "00:00", 59.2: "01:00", 3599: "59:59", 3600: "1:00:00", 20832: "5:47:12", -3: "00:00"}
+        cases = {0: "00:00", 59.2: "01:00", 3599: "59:59", 3600: "1:00:00", 20832: "5:47:12", -3: "00:00",
+                 86400: "1g 00:00:00", 3 * 86400 + 38832: "3g 10:47:12"}
         for seconds, text in cases.items():
             with self.subTest(seconds):
                 self.assertEqual(schedule.format_seconds(seconds), text)
