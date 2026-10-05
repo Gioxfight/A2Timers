@@ -165,6 +165,9 @@ class FormatTests(unittest.TestCase):
             with self.subTest(seconds):
                 self.assertEqual(schedule.format_seconds(seconds), text)
 
+    def test_day_unit(self):
+        self.assertEqual(schedule.format_seconds(3 * 86400 + 38832, day_unit="d"), "3d 10:47:12")
+
 
 if __name__ == "__main__":
     unittest.main()

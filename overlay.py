@@ -135,11 +135,9 @@ class Overlay:
             label = self.time_labels.get(rule.id)
             if label is not None:
                 if st.kind == "active":
-                    label.configure(text=i18n.t(self.lang, "active", time=schedule.format_seconds(st.seconds)),
-                                    fg=GREEN)
+                    label.configure(text=i18n.t(self.lang, "active", time=self.countdown(st.seconds)), fg=GREEN)
                 else:
-                    label.configure(text=schedule.format_seconds(st.seconds),
-                                    fg=ORANGE if st.kind == "soon" else FG)
+                    label.configure(text=self.countdown(st.seconds), fg=ORANGE if st.kind == "soon" else FG)
             if self.pref(rule)["alert"] and self.tracker.should_alert(rule.id, st.next_start, now, lead):
                 self.alert(rule, st.next_start, now)
         if self.update_result and not self._update_shown:
@@ -148,6 +146,9 @@ class Overlay:
         if self.ticks % TOPMOST_EVERY_TICKS == 0:
             self.root.attributes("-topmost", True)
         self.root.after(1000 - now.microsecond // 1000, self.tick)
+
+    def countdown(self, seconds):
+        return schedule.format_seconds(seconds, i18n.t(self.lang, "day_unit"))
 
     def alert(self, rule, start, now):
         minutes = max(1, math.ceil((start - now).total_seconds() / 60))

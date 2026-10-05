@@ -114,11 +114,11 @@ def state(rule: Rule, now: datetime, lead_minutes: int) -> EventState:
     return EventState("soon" if to_next <= lead_minutes * 60 else "idle", to_next, upcoming)
 
 
-def format_seconds(seconds: float) -> str:
+def format_seconds(seconds: float, day_unit: str = "g") -> str:
     total = max(0, math.ceil(seconds))
     days, total = divmod(total, 86400)
     hours, rest = divmod(total, 3600)
     minutes, secs = divmod(rest, 60)
     if days:
-        return f"{days}g {hours:02d}:{minutes:02d}:{secs:02d}"
+        return f"{days}{day_unit} {hours:02d}:{minutes:02d}:{secs:02d}"
     return f"{hours}:{minutes:02d}:{secs:02d}" if hours else f"{minutes:02d}:{secs:02d}"

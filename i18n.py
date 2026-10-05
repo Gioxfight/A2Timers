@@ -6,6 +6,7 @@ LANGUAGES = ("it", "en")
 STRINGS = {
     "it": {
         "active": "ATTIVO {time}",
+        "day_unit": "g",
         "toast_title": "{name} tra {minutes} min",
         "toast_body": "Inizia alle {time}",
         "test_toast_body": "Avviso di prova: suono e notifica funzionano",
@@ -38,6 +39,7 @@ STRINGS = {
     },
     "en": {
         "active": "ACTIVE {time}",
+        "day_unit": "d",
         "toast_title": "{name} in {minutes} min",
         "toast_body": "Starts at {time}",
         "test_toast_body": "Test alert: sound and notification work",

@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install build tools
+        run: |
+          pip install -r requirements-dev.txt
+          choco install innosetup --no-progress -y
+
+      - name: Check tag matches version.py
+        shell: pwsh
+        run: |
+          $v = (python -c "import version; print(version.__version__)").Trim()
+          if ("v$v" -ne "${{ github.ref_name }}") { throw "Tag ${{ github.ref_name }} does not match version.py ($v)" }
+
+      - name: Build installer
+        shell: pwsh
+        run: ./build.ps1
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/A2Timers-Setup-*.exe
+          generate_release_notes: true

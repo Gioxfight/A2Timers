@@ -16,6 +16,9 @@ class I18nTests(unittest.TestCase):
     def test_every_key_exists_in_both_languages(self):
         self.assertEqual(set(i18n.STRINGS["it"]), set(i18n.STRINGS["en"]))
 
+    def test_day_unit(self):
+        self.assertEqual((i18n.t("it", "day_unit"), i18n.t("en", "day_unit")), ("g", "d"))
+
     def test_unknown_language_uses_english(self):
         self.assertEqual(i18n.t("fr", "save"), "Save")
 
