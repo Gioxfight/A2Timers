@@ -22,6 +22,10 @@ def sounds_dir() -> Path:
     return app_dir() / "assets" / "sounds"
 
 
+def updates_dir() -> Path:
+    return data_dir() / "updates"
+
+
 def settings_path() -> Path:
     return data_dir() / "settings.json"
 

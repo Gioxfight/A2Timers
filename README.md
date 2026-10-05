@@ -28,7 +28,7 @@ Times are shown in your PC's local time zone.
 - Resize it with the **◢** corner grip or the *Size* slider (60–200%), and set its *Opacity* (20–100%).
 - Row turns **orange** before an event and **green ("ACTIVE")** while it is running.
 - Settings (⚙): choose which events to **show**, which ones **alert** you, a **sound per event** (built-in, Windows or your own `.wav`), alert lead time, language (English / Italian).
-- Tells you when a new version is available.
+- **Updates itself:** downloads new versions in the background, checks their SHA-256, then one click on *"⬆ ready – click to update"* installs and reopens it.
 - **Safe for your account:** it does not read the game's memory or network traffic — it only does clock math.
 
 ### Install
@@ -62,7 +62,7 @@ Releases are built automatically by GitHub Actions when a `vX.Y.Z` tag is pushed
 | | |
 |---|---|
 | **Game** | Never reads the game's memory, files or network traffic, and never sends input to it. It cannot get your account flagged: it only does clock math. |
-| **Network** | One request at startup to `api.github.com` to check for a new version (turn it off in ⚙). Nothing else, no telemetry. |
+| **Network** | At startup it asks `api.github.com` for a new version and, if there is one, downloads it **only** from this repository's Releases and checks its SHA-256 (turn it off in ⚙). Nothing else, no telemetry. |
 | **Permissions** | Installs per user, **no administrator rights**. Writes only to its install folder and `%APPDATA%\A2Timers`. |
 | **Source** | 100% open source (MIT): every line is in this repository. |
 | **Build** | Every installer is built by **GitHub Actions** from the tagged source code — not on a private PC — and published with its **SHA-256** and a signed **build provenance attestation**. |
@@ -89,7 +89,7 @@ Eventi: Shugo Festival, Spacetime Rift, Watcher Kaira, Artifact Siege, Siege Bos
 - Grandezza regolabile con la maniglia **◢** nell'angolo o con il cursore *Grandezza* (60–200%), più il cursore *Opacità* (20–100%).
 - La riga diventa **arancione** prima dell'evento e **verde ("ATTIVO")** mentre è in corso.
 - Impostazioni (⚙): scegli quali eventi **mostrare**, quali **avvisare**, un **suono per ogni evento** (inclusi, di Windows o un tuo `.wav`), i minuti di anticipo e la lingua.
-- Ti avvisa quando esce una nuova versione.
+- **Si aggiorna da solo:** scarica le nuove versioni in background, ne verifica lo SHA-256 e con un clic su *"⬆ pronta – clicca per aggiornare"* si installa e si riapre.
 - **Nessun rischio per l'account:** non legge la memoria del gioco né il traffico di rete, fa solo calcoli sull'orologio.
 
 ### Installazione
@@ -103,7 +103,7 @@ Si disinstalla da *Impostazioni → App*. Le impostazioni restano in `%APPDATA%\
 | | |
 |---|---|
 | **Gioco** | Non legge mai memoria, file o traffico di rete del gioco e non gli invia comandi. Non può farti segnalare l'account: fa solo calcoli sull'orologio. |
-| **Rete** | Una sola richiesta all'avvio verso `api.github.com` per controllare se c'è una nuova versione (disattivabile in ⚙). Nient'altro, nessuna telemetria. |
+| **Rete** | All'avvio chiede a `api.github.com` se c'è una nuova versione e, se c'è, la scarica **solo** dalle Release di questo repository verificandone lo SHA-256 (disattivabile in ⚙). Nient'altro, nessuna telemetria. |
 | **Permessi** | Si installa per utente, **senza permessi di amministratore**. Scrive solo nella sua cartella e in `%APPDATA%\A2Timers`. |
 | **Codice** | 100% open source (MIT): ogni riga è in questo repository. |
 | **Build** | Ogni installer è costruito da **GitHub Actions** a partire dal codice pubblicato — non su un PC privato — e pubblicato con il suo **SHA-256** e un'**attestazione di provenienza** firmata. |

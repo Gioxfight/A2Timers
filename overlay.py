@@ -44,8 +44,10 @@ class Overlay:
         self._drag = (0, 0)
         self._dialog = None
         self._container = None
-        self.update_result = None  # set by the update thread: (tag, url)
-        self._update_shown = False
+        # Set by the update thread, displayed by tick(): Release, then the verified installer path.
+        self.update_release = None
+        self.update_installer = None
+        self._update_state = None
 
         root.title("A2Timers")
         root.overrideredirect(True)
@@ -86,7 +88,7 @@ class Overlay:
         self._button(header, "✕", self.close)
         self._button(header, "⚙", self.open_settings)
         self.update_label = tk.Label(header, text="", bg=BG, fg=GREEN, font=self.fonts["small"], cursor="hand2")
-        self._update_shown = False
+        self._update_state = None
 
         body = tk.Frame(self._container, bg=BG)
         body.pack(fill="both", padx=8)
@@ -154,15 +156,36 @@ class Overlay:
             pass
 
     def _check_updates(self):
-        # Runs in a worker thread: only stores the result, the Tk tick displays it.
-        self.update_result = updater.check_for_update(GITHUB_REPO, __version__)
+        # Runs in a worker thread: only stores results, the Tk tick displays them.
+        updater.clean_downloads(paths.updates_dir(), __version__)
+        release = updater.check_for_update(GITHUB_REPO, __version__)
+        self.update_release = release
+        if release is not None:
+            self.update_installer = updater.download_update(release, paths.updates_dir())
 
     def _show_update(self):
-        tag, url = self.update_result
-        self.update_label.configure(text=i18n.t(self.lang, "update_available", version=tag))
+        release = self.update_release
+        if self.update_installer is not None:
+            state, text, action = "ready", "update_ready", self.install_update
+        else:
+            state, text, action = "available", "update_available", lambda: webbrowser.open(release.page_url)
+        if state == self._update_state:
+            return
+        self.update_label.configure(text=i18n.t(self.lang, text, version=release.tag))
         self.update_label.pack(side="left", padx=(8, 0))
-        self.update_label.bind("<Button-1>", lambda _e: (webbrowser.open(url), "break")[1])
-        self._update_shown = True
+        self.update_label.bind("<Button-1>", lambda _e: (action(), "break")[1])
+        self._update_state = state
+
+    def install_update(self):
+        """Close and let the verified installer update and relaunch the app."""
+        self._save_prefs()
+        _release_instance_lock()
+        try:
+            updater.launch_installer(self.update_installer)
+        except OSError:
+            webbrowser.open(self.update_release.page_url)
+            return
+        self.root.destroy()
 
     def tick(self):
         now = datetime.now(timezone.utc)
@@ -177,7 +200,7 @@ class Overlay:
                     label.configure(text=self.countdown(st.seconds), fg=ORANGE if st.kind == "soon" else FG)
             if self.pref(rule)["alert"] and self.tracker.should_alert(rule.id, st.next_start, now, lead):
                 self.alert(rule, st.next_start, now)
-        if self.update_result and not self._update_shown:
+        if self.update_release is not None:
             self._show_update()
         self.ticks += 1
         if self.ticks % TOPMOST_EVERY_TICKS == 0:
@@ -367,6 +390,18 @@ def _already_running() -> bool:
         return kernel32.GetLastError() == ERROR_ALREADY_EXISTS
     except (ImportError, AttributeError, OSError):
         return False
+
+
+def _release_instance_lock():
+    """Let the installer see that the app is no longer running."""
+    handle = getattr(_already_running, "handle", None)
+    if handle:
+        try:
+            import ctypes
+            ctypes.windll.kernel32.CloseHandle(handle)
+        except (ImportError, AttributeError, OSError):
+            pass
+        _already_running.handle = None
 
 
 def main():
