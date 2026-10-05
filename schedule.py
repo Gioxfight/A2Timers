@@ -1,0 +1,81 @@
+"""Pure schedule math for AION 2 recurring events. All rules are defined in UTC."""
+import json
+import math
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+
+DAY_MINUTES = 1440
+
+
+@dataclass(frozen=True)
+class Rule:
+    id: str
+    name: str
+    icon: str
+    anchor_minutes: int
+    every_minutes: int
+    duration_minutes: int
+
+
+@dataclass(frozen=True)
+class EventState:
+    kind: str  # "active" | "soon" | "idle"
+    seconds: float  # active: time left in the window; otherwise: time to next start
+    next_start: datetime
+
+
+def parse_rule(data: dict) -> Rule:
+    rule_id = data.get("id", "?")
+    try:
+        hours, minutes = (int(part) for part in data["anchor_utc"].split(":"))
+    except (KeyError, ValueError, AttributeError) as exc:
+        raise ValueError(f"{rule_id}: anchor_utc must be 'HH:MM'") from exc
+    if not (0 <= hours < 24 and 0 <= minutes < 60):
+        raise ValueError(f"{rule_id}: anchor_utc out of range")
+    every = int(data["every_minutes"])
+    duration = int(data.get("duration_minutes", 0))
+    if every <= 0 or DAY_MINUTES % every:
+        raise ValueError(f"{rule_id}: every_minutes must divide 1440")
+    if not 0 <= duration < every:
+        raise ValueError(f"{rule_id}: duration_minutes must be in [0, every_minutes)")
+    return Rule(id=str(data["id"]), name=str(data["name"]), icon=str(data.get("icon", "")),
+                anchor_minutes=hours * 60 + minutes, every_minutes=every, duration_minutes=duration)
+
+
+def load_rules(path) -> list[Rule]:
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("events.json must be a non-empty list")
+    return [parse_rule(item) for item in raw]
+
+
+def current_start(rule: Rule, now: datetime) -> datetime:
+    """Latest occurrence start that is <= now (UTC)."""
+    now_utc = now.astimezone(timezone.utc)
+    midnight = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+    anchor = midnight + timedelta(minutes=rule.anchor_minutes)
+    period = timedelta(minutes=rule.every_minutes)
+    return anchor + math.floor((now_utc - anchor) / period) * period
+
+
+def next_start(rule: Rule, now: datetime) -> datetime:
+    """First occurrence start strictly after now (UTC)."""
+    return current_start(rule, now) + timedelta(minutes=rule.every_minutes)
+
+
+def state(rule: Rule, now: datetime, lead_minutes: int) -> EventState:
+    start = current_start(rule, now)
+    upcoming = start + timedelta(minutes=rule.every_minutes)
+    end = start + timedelta(minutes=rule.duration_minutes)
+    if now < end:
+        return EventState("active", (end - now).total_seconds(), upcoming)
+    to_next = (upcoming - now).total_seconds()
+    return EventState("soon" if to_next <= lead_minutes * 60 else "idle", to_next, upcoming)
+
+
+def format_seconds(seconds: float) -> str:
+    total = max(0, math.ceil(seconds))
+    hours, rest = divmod(total, 3600)
+    minutes, secs = divmod(rest, 60)
+    return f"{hours}:{minutes:02d}:{secs:02d}" if hours else f"{minutes:02d}:{secs:02d}"
