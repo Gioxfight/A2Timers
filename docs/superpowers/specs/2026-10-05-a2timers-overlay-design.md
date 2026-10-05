@@ -20,7 +20,19 @@ All rules are defined in UTC and converted to the PC's local time zone (DST-awar
 Source: questlog.gg (Shugo, Spacetime Rift, Boss Schedule, Server Resets pages), verified
 2026-10-05 12:10 CEST: next Shugo 13:00, Rift 14:00, Kaira 13:00, Reset 18:00 local.
 
-Out of scope for v1: siege bosses, Guardian Lord Nahma, weekly reset, online sync.
+v1.1 (2026-10-05) adds weekday rules (`"weekdays": ["mon", "thu", "sat"]`, implies
+`every_minutes` = 1440; weekday evaluated in UTC):
+
+| id           | Name                | Rule (UTC)              | Active window |
+|--------------|---------------------|-------------------------|---------------|
+| siege        | Artifact Siege      | Mon/Thu/Sat 21:00       | 30 min        |
+| siege_bosses | Siege Bosses        | Mon/Thu/Sat 21:30       | 30 min        |
+| nahma        | Guardian Lord Nahma | Fri/Sun 19:00           | 30 min        |
+| weekly_reset | Weekly reset        | Wed 16:00               | 0             |
+
+Countdowns of a day or more display as `Ng HH:MM:SS`.
+
+Out of scope: online sync.
 
 ## Rule format (`events.json`)
 ```json
